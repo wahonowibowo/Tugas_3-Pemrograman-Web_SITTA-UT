@@ -1,0 +1,78 @@
+<app-modal :title="modalTitle" @close="$emit('close')">
+    <template #header-icon>
+        <i class="fa-solid" :class="mode === 'tambah' ? 'fa-plus-circle text-orange-300 animate-pulse' : 'fa-edit text-orange-300'"></i>
+    </template>
+    
+    <form @submit.prevent="submit" id="stokForm" class="form-grid">
+        <div class="form-group" v-if="mode === 'tambah'">
+            <label>Kode Bahan Ajar <span class="text-red-500">*</span></label>
+            <input type="text" v-model="formData.kode" placeholder="Misal: EKMA4116" :class="{'form-error': errors.kode}">
+            <span class="error-msg" v-if="errors.kode"><i class="fa-solid fa-circle-exclamation"></i> {{ errors.kode }}</span>
+        </div>
+        <div class="form-group" v-else>
+            <label>Kode Bahan Ajar (Primary Key)</label>
+            <input type="text" :value="formData.kode" disabled class="bg-gray-200 border-gray-300 text-gray-500 cursor-not-allowed">
+        </div>
+
+        <div class="form-group">
+            <label>Judul Bahan Ajar <span class="text-red-500">*</span></label>
+            <input type="text" v-model="formData.judul" placeholder="Nama mata kuliah..." :class="{'form-error': errors.judul}">
+            <span class="error-msg" v-if="errors.judul"><i class="fa-solid fa-circle-exclamation"></i> {{ errors.judul }}</span>
+        </div>
+
+        <div class="form-group">
+            <label>Kategori <span class="text-red-500">*</span></label>
+            <select v-model="formData.kategori" :class="{'form-error': errors.kategori}">
+                <option value="">Pilih Kategori</option>
+                <option v-for="kat in kategoriList" :value="kat" :key="kat" v-text="kat"></option>
+            </select>
+            <span class="error-msg" v-if="errors.kategori"><i class="fa-solid fa-circle-exclamation"></i> {{ errors.kategori }}</span>
+        </div>
+
+        <div class="form-group">
+            <label>UT-Daerah (UPBJJ) <span class="text-red-500">*</span></label>
+            <select v-model="formData.upbjj" :class="{'form-error': errors.upbjj}">
+                <option value="">Pilih UT-Daerah</option>
+                <option v-for="upbjj in upbjjList" :value="upbjj" :key="upbjj" v-text="upbjj"></option>
+            </select>
+            <span class="error-msg" v-if="errors.upbjj"><i class="fa-solid fa-circle-exclamation"></i> {{ errors.upbjj }}</span>
+        </div>
+
+        <div class="form-group">
+            <label>Lokasi Rak <span class="text-red-500">*</span></label>
+            <input type="text" v-model="formData.lokasiRak" placeholder="Misal: R1-A3" :class="{'form-error': errors.lokasiRak}">
+            <span class="error-msg" v-if="errors.lokasiRak"><i class="fa-solid fa-circle-exclamation"></i> {{ errors.lokasiRak }}</span>
+        </div>
+
+        <div class="form-group">
+            <label>Harga Bahan Ajar (Rp) <span class="text-red-500">*</span></label>
+            <input type="number" v-model.number="formData.harga" placeholder="Harga Satuan..." :class="{'form-error': errors.harga}">
+            <span class="error-msg" v-if="errors.harga"><i class="fa-solid fa-circle-exclamation"></i> {{ errors.harga }}</span>
+        </div>
+
+        <div class="form-group">
+            <label>Jumlah Stok (Qty) <span class="text-red-500">*</span></label>
+            <input type="number" v-model.number="formData.qty" placeholder="Jumlah fisik..." :class="{'form-error': errors.qty}">
+            <span class="error-msg" v-if="errors.qty"><i class="fa-solid fa-circle-exclamation"></i> {{ errors.qty }}</span>
+        </div>
+
+        <div class="form-group">
+            <label>Safety Stock <span class="text-red-500">*</span></label>
+            <input type="number" v-model.number="formData.safety" placeholder="Batas minimum..." :class="{'form-error': errors.safety}">
+            <span class="error-msg" v-if="errors.safety"><i class="fa-solid fa-circle-exclamation"></i> {{ errors.safety }}</span>
+        </div>
+
+        <div class="form-group full-width">
+            <label>Catatan Tambahan (Bisa berisi tag HTML)</label>
+            <textarea v-model="formData.catatanHTML" placeholder="Cth: <strong>Segera Reorder</strong> jika mendekati batas safety..."></textarea>
+        </div>
+        
+        <!-- Hidden submit button to ensure Enter key works from inputs -->
+        <button type="submit" class="hidden" style="display: none;"></button>
+    </form>
+
+    <template #footer>
+        <button type="button" class="btn-cancel" @click="$emit('close')">Batal</button>
+        <button type="submit" form="stokForm" class="btn-save">Simpan Perubahan</button>
+    </template>
+</app-modal>

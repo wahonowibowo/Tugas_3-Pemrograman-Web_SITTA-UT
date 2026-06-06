@@ -1,0 +1,17 @@
+<div class="modal-overlay">
+    <div class="modal-content overflow-hidden border border-gray-100 rounded-2xl" :class="customClass">
+        <div class="modal-header bg-gradient-to-r from-[#1e3a8a] to-[#f97316] text-white p-5 border-b-0">
+            <h3 class="font-outfit text-xl font-bold text-white flex items-center gap-2">
+                <slot name="header-icon"></slot>
+                {{ title }}
+            </h3>
+            <button class="btn-close-modal text-white hover:text-red-200 bg-white/10 border-white/20 hover:bg-red-500/20" @click="$emit('close')">&times;</button>
+        </div>
+        <div class="modal-body text-left">
+            <slot></slot>
+        </div>
+        <div class="modal-footer">
+            <slot name="footer"></slot>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,19 @@
+<span>
+    <!-- Badge untuk Stok -->
+    <span v-if="type === 'stok'">
+        <span v-if="status === 'Aman'" class="status-badge status-aman">
+            <i class="fa-solid fa-circle-check"></i> Aman
+        </span>
+        <span v-else-if="status === 'Menipis'" class="status-badge status-menipis">
+            <i class="fa-solid fa-triangle-exclamation"></i> Menipis
+        </span>
+        <span v-else class="status-badge status-kosong">
+            <i class="fa-solid fa-circle-xmark"></i> Kosong
+        </span>
+    </span>
+
+    <!-- Badge untuk Tracking -->
+    <span v-else-if="type === 'tracking'" class="status-capsule" :class="trackingClass">
+        <i class="fa-solid" :class="trackingIcon"></i> {{ status }}
+    </span>
+</span>

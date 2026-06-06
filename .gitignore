@@ -1,0 +1,7 @@
+# Ignore markdown reports but keep README
+*.md
+!README.md
+
+# OS generated files
+.DS_Store
+Thumbs.db

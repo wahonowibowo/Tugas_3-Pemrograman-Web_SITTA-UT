@@ -1,0 +1,189 @@
+<main class="container mx-auto px-4 -mt-32 md:-mt-40 relative z-30 pb-12">
+    <div class="flex flex-col gap-6">
+
+        <!-- Summary Cards -->
+        <div class="summary-cards">
+            <div class="summary-card">
+                <div class="icon-box icon-total"><i class="fa-solid fa-boxes-stacked"></i></div>
+                <div class="info">
+                    <h3 v-text="totalItems">0</h3>
+                    <p>Total Item</p>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="icon-box icon-aman"><i class="fa-solid fa-circle-check"></i></div>
+                <div class="info">
+                    <h3 class="text-aman" v-text="totalAman">0</h3>
+                    <p>Stok Aman</p>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="icon-box icon-menipis"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                <div class="info">
+                    <h3 class="text-menipis" v-text="totalMenipis">0</h3>
+                    <p>Stok Menipis</p>
+                </div>
+            </div>
+            <div class="summary-card">
+                <div class="icon-box icon-kosong"><i class="fa-solid fa-circle-xmark"></i></div>
+                <div class="info">
+                    <h3 class="text-kosong" v-text="totalKosong">0</h3>
+                    <p>Stok Kosong</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Panel -->
+        <div class="filter-panel">
+            <h3 class="font-outfit"><i class="fa-solid fa-filter text-orange-500"></i> Panel Filter & Pencarian</h3>
+            <div class="filter-grid">
+                <div class="filter-group">
+                    <label>Pencarian Bahan Ajar</label>
+                    <input type="text" v-model="searchQuery" placeholder="Cari Kode / Judul...">
+                </div>
+
+                <div class="filter-group">
+                    <label>UT-Daerah (UPBJJ)</label>
+                    <select v-model="filterUpbjj">
+                        <option value="">Semua Wilayah</option>
+                        <option v-for="upbjj in upbjjList" :value="upbjj" :key="upbjj" v-text="upbjj"></option>
+                    </select>
+                </div>
+
+                <div class="filter-group" v-show="filterUpbjj">
+                    <label>Kategori</label>
+                    <select v-model="filterKategori">
+                        <option value="">Semua Kategori</option>
+                        <option v-for="kat in availableKategori" :value="kat" :key="kat" v-text="kat"></option>
+                    </select>
+                </div>
+
+                <div class="filter-group">
+                    <label>Urutkan Berdasarkan</label>
+                    <select v-model="sortBy">
+                        <option value="">Bawaan</option>
+                        <option value="kode">Kode Bahan Ajar</option>
+                        <option value="judul">Nama Bahan Ajar</option>
+                        <option value="qty">Jumlah Stok</option>
+                        <option value="harga">Harga</option>
+                    </select>
+                </div>
+
+                <div class="filter-actions lg:col-span-2">
+                    <label class="filter-checkbox">
+                        <input type="checkbox" v-model="filterStokRendah">
+                        <span>Stok di bawah Safety</span>
+                    </label>
+                    <label class="filter-checkbox">
+                        <input type="checkbox" v-model="filterStokKosong">
+                        <span>Stok Kosong</span>
+                    </label>
+                    <button class="btn-reset" @click="resetFilter">
+                        <i class="fa-solid fa-rotate-left"></i> Reset Filter
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-4 justify-between items-center text-xs text-gray-500">
+                <div class="flex items-center gap-1.5" v-if="searchLog">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
+                    <span v-text="searchLog"></span>
+                </div>
+                <div class="flex items-center gap-1.5" v-if="lastFilterChange">
+                    <i class="fa-solid fa-clock-rotate-left text-gray-400"></i>
+                    <span v-text="lastFilterChange"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabel Stok -->
+        <div class="stok-table-container">
+            <div class="table-header">
+                <h2 class="font-outfit"><i class="fa-solid fa-database text-orange-500"></i> Data Inventaris Bahan Ajar</h2>
+                <button class="btn-tambah" @click="showFormTambah = true">
+                    <i class="fa-solid fa-plus-circle"></i> Tambah Stok Baru
+                </button>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="stok-table">
+                    <thead>
+                        <tr>
+                            <th @click="toggleSort('kode')">Kode <i class="fa-solid sort-indicator" :class="sortBy === 'kode' ? (sortOrder === 'asc' ? 'fa-sort-up active' : 'fa-sort-down active') : 'fa-sort'"></i></th>
+                            <th @click="toggleSort('judul')">Nama Bahan Ajar <i class="fa-solid sort-indicator" :class="sortBy === 'judul' ? (sortOrder === 'asc' ? 'fa-sort-up active' : 'fa-sort-down active') : 'fa-sort'"></i></th>
+                            <th>Kategori</th>
+                            <th>UT-Daerah</th>
+                            <th class="col-center">Rak</th>
+                            <th @click="toggleSort('harga')">Harga <i class="fa-solid sort-indicator" :class="sortBy === 'harga' ? (sortOrder === 'asc' ? 'fa-sort-up active' : 'fa-sort-down active') : 'fa-sort'"></i></th>
+                            <th class="col-center" @click="toggleSort('qty')">Stok <i class="fa-solid sort-indicator" :class="sortBy === 'qty' ? (sortOrder === 'asc' ? 'fa-sort-up active' : 'fa-sort-down active') : 'fa-sort'"></i></th>
+                            <th class="col-center">Safety</th>
+                            <th class="col-center">Status</th>
+                            <th>Catatan</th>
+                            <th class="col-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(item, index) in filteredAndSortedStok" :key="item.kode">
+                            <td class="col-kode" v-text="item.kode"></td>
+                            <td class="col-judul" v-text="item.judul"></td>
+                            <td><span class="kategori-badge" v-text="item.kategori"></span></td>
+                            <td><span class="lokasi-badge"><i class="fa-solid fa-location-dot"></i> {{ item.upbjj }}</span></td>
+                            <td class="col-center font-mono font-semibold" v-text="item.lokasiRak"></td>
+                            <td><span class="harga-text">{{ item.harga | rupiah }}</span></td>
+                            <td class="col-center font-bold" :class="{'text-red-600': item.qty === 0, 'text-yellow-600': item.qty > 0 && item.qty < item.safety}">{{ item.qty }} buah</td>
+                            <td class="col-center text-gray-500">{{ item.safety }} buah</td>
+                            <td class="col-center relative group cursor-pointer">
+                                <status-badge type="stok" :status="getStatus(item)"></status-badge>
+                                <!-- Tooltip HTML -->
+                                <div class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 bg-gray-800 text-white text-xs rounded p-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-50">
+                                    <div v-html="item.catatanHTML"></div>
+                                    <div class="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-800"></div>
+                                </div>
+                            </td>
+                            <td class="col-center space-x-1">
+                                <button class="btn-edit" @click="bukaFormEdit(item)">
+                                    <i class="fa-solid fa-edit"></i> Edit
+                                </button>
+                                <button class="btn-edit !bg-red-50 !text-red-600 !border-red-200 hover:!bg-red-600 hover:!text-white" @click="hapusBahanAjar(item)">
+                                    <i class="fa-solid fa-trash"></i> Hapus
+                                </button>
+                            </td>
+                        </tr>
+                        <tr v-if="filteredAndSortedStok.length === 0">
+                            <td colspan="10" class="empty-state">
+                                <i class="fa-solid fa-magnifying-glass-minus"></i>
+                                <span>Tidak ada data bahan ajar yang cocok dengan filter.</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="table-info">
+                <div>Menampilkan <strong v-text="jumlahDitampilkan">0</strong> dari <strong v-text="totalItems">0</strong> item.</div>
+                <div class="text-gray-400 text-xs">*Klik judul kolom tabel untuk pengurutan cepat.</div>
+            </div>
+        </div>
+
+        <!-- Order Form Modals -->
+        <order-form 
+            v-if="showFormTambah" 
+            mode="tambah" 
+            :upbjj-list="upbjjList" 
+            :kategori-list="kategoriList" 
+            @close="showFormTambah = false" 
+            @save="tambahBahanAjar">
+        </order-form>
+
+        <order-form 
+            v-if="showFormEdit" 
+            mode="edit" 
+            :item="selectedItem" 
+            :upbjj-list="upbjjList" 
+            :kategori-list="kategoriList" 
+            @close="showFormEdit = false" 
+            @save="simpanEdit">
+        </order-form>
+
+    </div>
+</main>

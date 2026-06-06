@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SITTA-UT - Sistem Informasi Tiras Bahan Ajar</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Tailwind CSS (via CDN for Tugas) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: { extend: { fontFamily: { sans: ['Roboto', 'sans-serif'], outfit: ['Outfit', 'sans-serif'] } } }
+        }
+    </script>
+    
+    <!-- Custom Styles (Gabungan style.css, stok.css, tracking.css) -->
+    <link rel="stylesheet" href="assets/css/style.css">
+    
+    <!-- Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body class="bg-[#f0f8ff] min-h-screen flex flex-col font-sans">
+
+    <!-- Vue App Mount Point -->
+    <div id="app" class="flex-1 flex flex-col min-h-screen">
+        
+        <!-- Loading Screen (muncul saat fetch JSON & Template) -->
+        <div v-if="isLoadingData || !templatesLoaded" class="fixed inset-0 z-50 flex items-center justify-center bg-[#f0f8ff]">
+            <div class="text-center">
+                <i class="fa-solid fa-circle-notch fa-spin text-5xl text-orange-500 mb-4"></i>
+                <h2 class="text-xl font-outfit text-blue-900 font-bold">Memuat Aplikasi...</h2>
+                <p class="text-sm text-gray-500 mt-2">Menyiapkan komponen dan data.</p>
+            </div>
+        </div>
+
+        <!-- App Container (Hanya tampil jika data & template siap) -->
+        <div v-else class="flex-1 flex flex-col relative w-full h-full">
+            
+            <!-- Navbar Component -->
+            <app-navbar 
+                :active-page="currentPage" 
+                :is-logged-in="isLoggedIn"
+                @navigate="navigateTo"
+                @logout="handleLogout"
+            ></app-navbar>
+
+            <!-- Conditional Page Rendering -->
+            <transition name="fade" mode="out-in">
+                
+                <!-- Halaman Login -->
+                <app-login 
+                    v-if="currentPage === 'login'" 
+                    key="login"
+                    :users="appData.pengguna"
+                    @login-success="handleLogin"
+                ></app-login>
+
+                <!-- Halaman Dashboard -->
+                <app-dashboard 
+                    v-else-if="currentPage === 'dashboard'" 
+                    key="dashboard"
+                    :user-name="userName"
+                    @navigate="navigateTo"
+                ></app-dashboard>
+
+                <!-- Halaman Stok Bahan Ajar -->
+                <stok-table 
+                    v-else-if="currentPage === 'stok'" 
+                    key="stok"
+                    :stok-data="appData.stokBahanAjar"
+                    :upbjj-list="appData.upbjjList"
+                    :kategori-list="appData.kategoriList"
+                    @tambah-stok="handleTambahStok"
+                    @edit-stok="handleEditStok"
+                    @hapus-stok="handleHapusStok"
+                ></stok-table>
+
+                <!-- Halaman Tracking DO -->
+                <do-tracking 
+                    v-else-if="currentPage === 'tracking'" 
+                    key="tracking"
+                    :tracking-data="appData.tracking"
+                    :paket-list="appData.paket"
+                    :upbjj-list="appData.upbjjList"
+                    @tambah-tracking="handleTambahTracking"
+                    @update-progress="handleUpdateProgress"
+                ></do-tracking>
+                
+            </transition>
+        </div>
+
+        <!-- Simple Footer -->
+        <footer class="mt-auto py-6 bg-white border-t border-gray-200 text-center z-10">
+            <p class="text-sm text-gray-500">© 2026 SITTA-UT. Tugas Praktikum 3 - Pemrograman Web.</p>
+        </footer>
+    </div>
+
+    <!-- API & Service -->
+    <script src="js/services/api.js"></script>
+
+    <!-- Vue Components -->
+    <script src="js/components/app-modal.js"></script>
+    <script src="js/components/status-badge.js"></script>
+    <script src="js/components/app-navbar.js"></script>
+    <script src="js/components/app-login.js"></script>
+    <script src="js/components/app-dashboard.js"></script>
+    <script src="js/components/order-form.js"></script>
+    <script src="js/components/stok-table.js"></script>
+    <script src="js/components/do-tracking.js"></script>
+    
+    <!-- Root Instance -->
+    <script src="js/app.js"></script>
+
+</body>
+</html>

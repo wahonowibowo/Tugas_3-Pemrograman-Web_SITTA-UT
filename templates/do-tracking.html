@@ -1,0 +1,193 @@
+<main class="container mx-auto px-4 -mt-32 md:-mt-40 relative z-30 pb-12">
+    <div class="max-w-4xl mx-auto flex flex-col gap-6">
+
+        <!-- Search Panel -->
+        <div class="search-card">
+            <div class="flex flex-col md:flex-row gap-4 items-stretch md:items-center">
+                <div class="search-input-group">
+                    <i class="fa-solid fa-magnifying-glass-location"></i>
+                    <input type="text" v-model="searchQuery" @keyup.enter="lacakDO" @keyup.esc="resetPencarian" placeholder="Masukkan Nomor DO atau NIM..." class="search-input">
+                </div>
+                <div class="flex gap-3 justify-end">
+                    <button class="btn-lacak" @click="lacakDO"><i class="fa-solid fa-search"></i> Lacak DO</button>
+                    <button class="btn-buat-do" @click="showFormDO = true"><i class="fa-solid fa-plus-circle"></i> DO Baru</button>
+                </div>
+            </div>
+            
+            <div class="mt-3 flex flex-wrap gap-4 justify-between items-center text-xs text-gray-400 font-medium" v-if="searchDebounceLog || lastActionLog">
+                <div class="flex items-center gap-1.5" v-if="searchDebounceLog">
+                    <span class="w-2 h-2 rounded-full bg-orange-500 animate-ping"></span>
+                    <span v-text="searchDebounceLog"></span>
+                </div>
+                <div class="flex items-center gap-1.5 ml-auto text-blue-500" v-if="lastActionLog">
+                    <i class="fa-solid fa-info-circle text-blue-400"></i>
+                    <span v-text="lastActionLog"></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dynamic Search Result Area -->
+        <transition name="fade">
+            <div v-if="foundDO" class="detail-card">
+                <div class="detail-header">
+                    <div>
+                        <h3>Detail Pelacakan Pengiriman</h3>
+                        <p class="text-xs text-gray-500 mt-0.5">Nomor DO: <strong class="font-mono text-gray-800 text-sm" v-text="foundDO.nomorDO"></strong></p>
+                    </div>
+                    <status-badge type="tracking" :status="foundDO.status"></status-badge>
+                </div>
+
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="label">NIM Mahasiswa</span>
+                        <span class="val" v-text="foundDO.nim || '-'"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Nama Penerima</span>
+                        <span class="val" v-text="foundDO.nama"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Ekspedisi (Tujuan)</span>
+                        <span class="val"><i class="fa-solid fa-truck-fast"></i> <span v-text="getEkspedisiLabel(foundDO)"></span></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Paket Bahan Ajar</span>
+                        <span class="val font-mono" v-text="foundDO.paketKode"></span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Tanggal Kirim</span>
+                        <span class="val">{{ foundDO.tanggalKirim | tanggalIndo }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Total Biaya</span>
+                        <span class="val text-blue-900 font-bold">{{ foundDO.total | rupiah }}</span>
+                    </div>
+                </div>
+
+                <div class="timeline-section">
+                    <h4><i class="fa-solid fa-route text-orange-500"></i> Riwayat Perjalanan Paket</h4>
+                    <div class="track-timeline">
+                        <div class="track-item" v-for="(log, index) in foundDO.perjalanan" :key="index">
+                            <div class="track-dot"></div>
+                            <div class="track-content">
+                                <span class="track-time"><i class="fa-regular fa-clock"></i> {{ log.waktu }}</span>
+                                <p class="track-desc" v-text="log.keterangan"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Update Status Pengiriman -->
+                <div class="p-6 bg-gray-50 border-t border-gray-200">
+                    <h4 class="text-sm font-bold text-gray-800 mb-3"><i class="fa-solid fa-plus-circle text-blue-500"></i> Update Status Pengiriman</h4>
+                    <form @submit.prevent="tambahProgress" class="flex gap-3">
+                        <input type="text" v-model="formProgress.keterangan" placeholder="Keterangan lokasi/status baru..." class="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:border-blue-500" required>
+                        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors">Tambah</button>
+                    </form>
+                </div>
+            </div>
+
+            <div v-else-if="hasSearched && !foundDO" class="bg-white rounded-2xl shadow-xl p-8 border border-gray-200 text-center text-gray-500">
+                <div class="text-red-500 text-4xl mb-3"><i class="fa-solid fa-circle-exclamation"></i></div>
+                <p class="font-bold text-gray-800 text-lg">Hasil Lacak Tidak Ditemukan</p>
+                <p class="text-sm text-gray-400 mt-1">Pastikan format penomoran sesuai (Cth: DO2025-001) dan nomor DO tersebut terdaftar.</p>
+            </div>
+
+            <div v-else class="bg-white rounded-2xl shadow-xl p-10 border border-gray-200 text-center text-gray-400">
+                <div class="text-blue-900/10 text-6xl mb-4"><i class="fa-solid fa-magnifying-glass-location"></i></div>
+                <p class="font-bold text-gray-600 font-outfit">Masukkan Nomor DO Untuk Melacak Pengiriman</p>
+                <p class="text-xs text-gray-400 mt-1">Atau klik tombol <strong>"DO Baru"</strong> untuk membuat lembar pelacakan delivery order baru secara instan.</p>
+            </div>
+        </transition>
+
+        <!-- Form Tambah DO Baru -->
+        <app-modal v-if="showFormDO" title="Formulir Delivery Order (DO) Baru" @close="showFormDO = false">
+            <template #header-icon>
+                <i class="fa-solid fa-file-circle-plus text-orange-300 animate-pulse"></i>
+            </template>
+            
+            <form @submit.prevent="simpanDOBaru" id="doForm" class="space-y-6">
+                <!-- Card Section 1: Informasi Penerima -->
+                <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-blue-800 mb-3 flex items-center gap-1.5"><i class="fa-solid fa-user-graduate"></i> Informasi Penerima & Tujuan</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="form-group">
+                            <label>NIM Mahasiswa <span class="text-red-500">*</span></label>
+                            <input type="text" v-model="formDO.nim" placeholder="Cth: 041234567" :class="{'form-error': errors.nim}">
+                            <span class="error-msg" v-if="errors.nim"><i class="fa-solid fa-circle-exclamation"></i> {{ errors.nim }}</span>
+                        </div>
+                        <div class="form-group md:col-span-2">
+                            <label>Nama Mahasiswa <span class="text-red-500">*</span></label>
+                            <input type="text" v-model="formDO.nama" placeholder="Nama lengkap..." :class="{'form-error': errors.nama}">
+                            <span class="error-msg" v-if="errors.nama"><i class="fa-solid fa-circle-exclamation"></i> {{ errors.nama }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Section 2: Pengiriman & Layanan -->
+                <div class="bg-gray-50/70 p-4 rounded-xl border border-gray-200">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-gray-700 mb-3 flex items-center gap-1.5"><i class="fa-solid fa-truck-fast"></i> Detail Ekspedisi & Tanggal Kirim</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="form-group">
+                            <label>UT-Daerah Tujuan <span class="text-red-500">*</span></label>
+                            <select v-model="formDO.upbjj" :class="{'form-error': errors.upbjj}">
+                                <option value="">Pilih Daerah</option>
+                                <option v-for="upbjj in upbjjList" :value="upbjj" :key="upbjj" v-text="upbjj"></option>
+                            </select>
+                            <span class="error-msg" v-if="errors.upbjj"><i class="fa-solid fa-circle-exclamation"></i> {{ errors.upbjj }}</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Metode Ekspedisi <span class="text-red-500">*</span></label>
+                            <select v-model="formDO.ekspedisi" :disabled="!formDO.upbjj" :class="{'form-error': errors.ekspedisi, 'bg-gray-100 cursor-not-allowed': !formDO.upbjj}">
+                                <option value="">Pilih Ekspedisi</option>
+                                <option v-for="eks in availableEkspedisi" :value="eks" :key="eks" v-text="eks"></option>
+                            </select>
+                            <span class="error-msg" v-if="errors.ekspedisi"><i class="fa-solid fa-circle-exclamation"></i> {{ errors.ekspedisi }}</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Tanggal Kirim <span class="text-red-500">*</span></label>
+                            <input type="date" v-model="formDO.tanggalKirim" :class="{'form-error': errors.tanggalKirim}">
+                            <span class="error-msg" v-if="errors.tanggalKirim"><i class="fa-solid fa-circle-exclamation"></i> {{ errors.tanggalKirim }}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Card Section 3: Detail Paket & Biaya -->
+                <div class="bg-orange-50/40 p-4 rounded-xl border border-orange-100">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-orange-800 mb-3 flex items-center gap-1.5"><i class="fa-solid fa-box-open"></i> Pilihan Paket & Tarif Otomatis</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="form-group">
+                            <label>Paket Bahan Ajar <span class="text-red-500">*</span></label>
+                            <select v-model="formDO.paketKode" :class="{'form-error': errors.paketKode}">
+                                <option value="">Pilih Paket</option>
+                                <option v-for="pkt in paketList" :value="pkt.kode" :key="pkt.kode">{{ pkt.kode }} - {{ pkt.nama }}</option>
+                            </select>
+                            <span class="error-msg" v-if="errors.paketKode"><i class="fa-solid fa-circle-exclamation"></i> {{ errors.paketKode }}</span>
+                        </div>
+                        <div class="form-group">
+                            <label>Nomor DO (Otomatis)</label>
+                            <div class="info-readonly font-mono border border-gray-300 rounded-lg py-2 px-3 bg-gray-200/80 text-gray-600 font-semibold text-sm" v-text="nextNumberDO"></div>
+                        </div>
+                        <div class="form-group">
+                            <label>Total Harga Paket</label>
+                            <div class="info-readonly font-outfit border border-orange-200 rounded-lg py-1 px-3 bg-orange-100/70 text-orange-800 font-bold text-base">{{ computedTotalHarga | rupiah }}</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="paket-detail-box" v-if="selectedPaketDetail">
+                    <h5>Detail Isi Buku ({{ selectedPaketDetail.kode }}):</h5>
+                    <ul>
+                        <li v-for="buku in selectedPaketDetail.isi" :key="buku"><i class="fa-solid fa-book"></i> {{ buku }}</li>
+                    </ul>
+                </div>
+            </form>
+
+            <template #footer>
+                <button type="button" class="btn-cancel" @click="showFormDO = false">Batal</button>
+                <button type="submit" form="doForm" class="btn-save">Simpan DO & Lacak</button>
+            </template>
+        </app-modal>
+
+    </div>
+</main>
