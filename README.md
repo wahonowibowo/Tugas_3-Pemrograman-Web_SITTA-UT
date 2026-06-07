@@ -27,16 +27,17 @@ SITTA-UT/
 ├── README.md                    # Dokumentasi repositori
 │
 ├── assets/
-│   └── css/
-│       └── style.css            # Gaya CSS gabungan
+│   ├── css/
+│   │   └── style.css            # Gaya CSS gabungan
+│   └── img/                     # Ikon/gambar (opsional)
 │
 ├── data/
-│   └── dataBahanAjar.json       # Database mock dalam bentuk JSON
+│   └── dataBahanAjar.json       # Sumber data (JSON)
 │
 ├── js/
-│   ├── app.js                   # Root Vue instance & Router sederhana
+│   ├── app.js                   # Inisialisasi Vue root
 │   ├── services/
-│   │   └── api.js               # Service layer untuk memuat JSON dan Template
+│   │   └── api.js               # fetch JSON (data service), menangani data akses
 │   └── components/              # Tempat logika Custom Element Vue
 │       ├── app-dashboard.js
 │       ├── app-login.js
