@@ -129,8 +129,27 @@ Vue.component('do-tracking', {
     validateFormDO() {
       let e = {};
       let f = this.formDO;
-      if (!f.nim || !f.nim.trim()) e.nim = 'NIM wajib diisi';
-      if (!f.nama || !f.nama.trim()) e.nama = 'Nama wajib diisi';
+      
+      // Validasi NIM: Wajib diisi, harus angka, dan berjumlah 9 digit
+      const nimVal = f.nim ? String(f.nim).trim() : '';
+      if (!nimVal) {
+        e.nim = 'NIM wajib diisi';
+      } else if (!/^[0-9]+$/.test(nimVal)) {
+        e.nim = 'NIM hanya boleh berisi angka';
+      } else if (nimVal.length !== 9) {
+        e.nim = 'NIM harus terdiri dari 9 digit angka';
+      }
+
+      // Validasi Nama: Wajib diisi, hanya huruf (dan karakter nama umum), min 3 karakter
+      const namaVal = f.nama ? String(f.nama).trim() : '';
+      if (!namaVal) {
+        e.nama = 'Nama wajib diisi';
+      } else if (!/^[a-zA-Z\s.',]+$/.test(namaVal)) {
+        e.nama = 'Nama hanya boleh berisi huruf';
+      } else if (namaVal.length < 3) {
+        e.nama = 'Nama minimal 3 karakter';
+      }
+
       if (!f.upbjj) e.upbjj = 'Pilih UT-Daerah';
       if (!f.ekspedisi) e.ekspedisi = 'Pilih Ekspedisi';
       if (!f.tanggalKirim) e.tanggalKirim = 'Tanggal wajib diisi';
